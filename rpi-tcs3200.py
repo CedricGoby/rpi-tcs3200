@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# 2015-07-03
+# Source du script original : http://abyz.co.uk/rpi/pigpio/index.html
 # rpi-tcs3200.py
 # Public Domain
 
