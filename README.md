@@ -1,10 +1,10 @@
-# rpi-capture-webcam.py
+# rpi-tcs3200.py
 
 ## Description
-Ce script python capture une image avec une webcam USB connectée à un Raspberry PI 2 model B. Il envoie l'image au format binaire vers une base de données MySQL distante. En cas d'erreur, un email est envoyé avec la nature de l'erreur rencontrée.
+Ce script python capte les couleurs d'un capteur TCS3200 connecté aux ports GPIO d'un Raspberry PI 2 model B.
 
 ## Matériel utilisé
-Webcam USB "HP HD 2300" connectée à un "Raspberry Pi 2 Model B"
+Capteur de couleur TCS3200 connecté à un Raspberry Pi 2 Model B.
 
 ## Licence
-GNU General Public License, version 3 (GPL-3.0)
+Public Domain : http://unlicense.org
