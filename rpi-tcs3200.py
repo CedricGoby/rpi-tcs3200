@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-#
-# Source du script original : http://abyz.co.uk/rpi/pigpio/index.html
-# rpi-tcs3200.py
-# Public Domain
+
+# Description : Capteur de couleurs.
+# Licence : Public Domain
+# Versioning : https://github.com/CedricGoby/rpi-tcs3200
+# Original script : http://abyz.co.uk/rpi/pigpio/index.html
 
 import time
 import threading
