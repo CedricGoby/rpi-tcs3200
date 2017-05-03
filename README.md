@@ -7,4 +7,4 @@ Ce script python capte les couleurs d'un capteur TCS3200 connecté aux ports GPI
 Capteur de couleur TCS3200 connecté à un Raspberry Pi 2 Model B.
 
 ## Licence
-Public Domain : http://unlicense.org
+Public Domain
