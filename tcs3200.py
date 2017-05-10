@@ -49,7 +49,7 @@ class sensor(threading.Thread):
    S2          |         15          |      BCM 22
    S3          |         16          |      BCM 23
    OUT         |         18          |      BCM 24
-   VDD         |          1          |      3v3 Power
+   VDD         |          1          |      5V Power
    GND         |         20          |      Ground
    OE          |         12          |      BCM 18
    LED         |         22          |      BCM 25
