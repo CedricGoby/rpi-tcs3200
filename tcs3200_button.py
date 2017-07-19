@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # Description : Reads RGB values from a TCS3200 colour sensor and write the result into a CSV file.
+# Use with switch buttons and LCD display.
 # Usage : ./tcs3200.py
 # Licence : Public Domain
 # Versioning : https://github.com/CedricGoby/rpi-tcs3200
@@ -560,13 +561,13 @@ if __name__ == "__main__":
 
    import sys
    import pigpio
-   import tcs3200
+   import tcs3200_button
    import os
    
    # specify the Pi host/port.  For the remote host name, use '' if on local machine
    pi = pigpio.pi('', 8888)
 
-   capture = tcs3200.sensor(pi, 24, 22, 23, 4, 17, 18)
+   capture = tcs3200_button.sensor(pi, 24, 22, 23, 4, 17, 18)
 
    capture.set_frequency(2) # 20%
 
