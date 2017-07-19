@@ -429,7 +429,7 @@ class sensor(threading.Thread):
 
       # Get three separate values
       self.rhz, self.ghz, self.bhz = self.get_hertz()
-      print("BLACK RGB (Hz)\n" + str(self.rhz) + " " + str(self.ghz) + " " + str(self.bhz))
+      print("BLACK RGB (Hz) " + str(self.rhz) + " " + str(self.ghz) + " " + str(self.bhz))
       time.sleep(5)
 
       print (term.bold('\n> WHITE calibration'))    
@@ -442,7 +442,7 @@ class sensor(threading.Thread):
       self.set_white_level(hz)
 
       self.rhz, self.ghz, self.bhz = self.get_hertz()     
-      print("WHITE RGB (Hz)\n" + str(self.rhz) + " " + str(self.ghz) + " " + str(self.bhz))
+      print("WHITE RGB (Hz) " + str(self.rhz) + " " + str(self.ghz) + " " + str(self.bhz))
       time.sleep(3)
 
       print ('\n{t.bold}{t.green}OK...{t.normal} Calibration OK\n'.format(t=term))    
