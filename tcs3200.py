@@ -477,8 +477,6 @@ class sensor(threading.Thread):
       except:
 		  print ("File error !")
       else:
-		  print ("Datas stored")
-		  #print(self.r, self.g, self.b)
 		  print("Datas stored\n" + str(self.r) + " " + str(self.g) + " " + str(self.b))
 		  time.sleep(5)
 
