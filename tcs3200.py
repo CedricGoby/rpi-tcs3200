@@ -468,8 +468,7 @@ class sensor(threading.Thread):
 
    # Write the last reading into a CSV file, add a timestamp
    def _csv_output(self, _file_output):
-      
-      print (self.r)
+
       try:	   
           with open(_file_output, 'a') as csvfile:
              capturewriter = csv.writer(csvfile, delimiter='\t')
