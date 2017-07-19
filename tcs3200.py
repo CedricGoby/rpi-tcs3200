@@ -6,12 +6,13 @@
 # Licence : Public Domain
 # Versioning : https://github.com/CedricGoby/rpi-tcs3200
 # Original script : http://abyz.co.uk/rpi/pigpio/index.html
-# Python Library for LCD : https://github.com/adafruit/Adafruit_Python_CharLCD
+# Script that allows to run pigpiod as a Linux service with root privileges : https://github.com/joan2937/pigpio/tree/master/util
 #
-# Before starting the script :
-# sudo pigpiod
-# export PIGPIO_ADDR=hostame
-# export PIGPIO_PORT=port
+# Before starting the script pigpiod must be running and the Pi host/port must be specified.
+#
+# sudo pigpiod (or use a startup script)
+# export PIGPIO_ADDR=hostame (or use the pigpio.pi() function)
+# export PIGPIO_PORT=port (or use the pigpio.pi() function)
 
 from __future__ import print_function
 
@@ -22,25 +23,6 @@ import csv
 from blessings import Terminal
 term = Terminal()
 
-# Import LCD module
-import Adafruit_CharLCD as LCD
-
-# LCD PIN = PI PIN (BCM)
-lcd_rs        = 5
-lcd_en        = 6
-lcd_d4        = 26
-lcd_d5        = 16
-lcd_d6        = 12
-lcd_d7        = 13
-lcd_backlight = 19
-
-# Define LCD column and row size for 16x2 LCD.
-lcd_columns = 16
-lcd_rows    = 2
-
-# Initialize the LCD using the pins above.
-lcd = LCD.Adafruit_CharLCD(lcd_rs, lcd_en, lcd_d4, lcd_d5, lcd_d6, lcd_d7,
-                        lcd_columns, lcd_rows, lcd_backlight)
 """
 This class reads RGB values from a TCS3200 colour sensor.
 
@@ -435,18 +417,10 @@ class sensor(threading.Thread):
    def _calibrate(self):
       
       # stdout
-      print (term.bold('\n> BLACK calibration'))
-
-      # LCD display      
-      lcd.clear()
-      lcd.message("BLACK calibration\nPress to start")     
+      print (term.bold('\n> BLACK calibration'))    
       
       raw_input('Place a black object in front of the sensor\nthen press ENTER to start.\n')
-      
-      lcd.clear()
-      lcd.blink(True)
-      lcd.message('BLACK:Progress ')
-           
+                
       for i in range(5):
          time.sleep(self._interval)
          hz = self.get_hertz()
@@ -455,19 +429,11 @@ class sensor(threading.Thread):
 
       # Get three separate values
       self.rhz, self.ghz, self.bhz = self.get_hertz()
-      lcd.clear()
-      lcd.blink(False)
-      lcd.message("BLACK RGB (Hz)\n" + str(self.rhz) + " " + str(self.ghz) + " " + str(self.bhz))
+      print("BLACK RGB (Hz)\n" + str(self.rhz) + " " + str(self.ghz) + " " + str(self.bhz))
       time.sleep(5)
 
-      print (term.bold('\n> WHITE calibration'))
-      lcd.clear()
-      lcd.message("WHITE calibration\nPress to start")      
-      raw_input('Place a white object in front of the sensor\nthen press ENTER to start.\n')
- 
-      lcd.clear()
-      lcd.blink(True)
-      lcd.message('WHITE:Progress ')      
+      print (term.bold('\n> WHITE calibration'))    
+      raw_input('Place a white object in front of the sensor\nthen press ENTER to start.\n')    
 
       for i in range(5):
          time.sleep(self._interval)
@@ -476,23 +442,14 @@ class sensor(threading.Thread):
       self.set_white_level(hz)
 
       self.rhz, self.ghz, self.bhz = self.get_hertz()     
-      lcd.clear()
-      lcd.blink(False)
-      lcd.message("WHITE RGB (Hz)\n" + str(self.rhz) + " " + str(self.ghz) + " " + str(self.bhz))
+      print("WHITE RGB (Hz)\n" + str(self.rhz) + " " + str(self.ghz) + " " + str(self.bhz))
       time.sleep(3)
 
       print ('\n{t.bold}{t.green}OK...{t.normal} Calibration OK\n'.format(t=term))    
-      lcd.clear()
-      #lcd.show_cursor(False)
-      lcd.message("Calibration OK")
       time.sleep(3)
 
    # Reading
    def _reading(self):
- 
-      lcd.clear()
-      lcd.blink(True)
-      lcd.message('READING... ')
             
       for i in range(5): # 5 readings
 	        """
@@ -519,15 +476,10 @@ class sensor(threading.Thread):
              capturewriter.writerow([time.time()] + [self.r] + [self.g] + [self.b] + [self.rhz] + [self.ghz] + [self.bhz] + [self.rcy] + [self.gcy] + [self.bcy])
       except:
 		  print ("File error !")
-		  lcd.clear()
-		  lcd.message("File error !")
-		  time.sleep(5)
       else:
 		  print ("Datas stored")
-		  print(self.r, self.g, self.b)
-		  lcd.clear()
-		  lcd.blink(False)
-		  lcd.message("Datas stored\n" + str(self.r) + " " + str(self.g) + " " + str(self.b))
+		  #print(self.r, self.g, self.b)
+		  print("Datas stored\n" + str(self.r) + " " + str(self.g) + " " + str(self.b))
 		  time.sleep(5)
 
    # LED On
@@ -550,8 +502,8 @@ if __name__ == "__main__":
    import tcs3200
    import os
 
-   # Create one instance of the pigpio.pi class. This class gives access to a specified Pi's GPIO. 
-   pi = pigpio.pi()
+   # specify the Pi host/port.  For the remote host name, use '' if on local machine
+   pi = pigpio.pi('', 8888)
 
    capture = tcs3200.sensor(pi, 24, 22, 23, 4, 17, 18)
 
@@ -594,8 +546,6 @@ if __name__ == "__main__":
 	   while not is_valid :
 	           try :
 	                   print (term.bold('\nEnter your choice [1-3] : '), end='')
-	                   lcd.clear()
-	                   lcd.message("TCS3200 ready...\nPress to start")
 	                   choice = int ( raw_input() ) # Only accept integer
 	                   is_valid = 1 # set it to 1 to validate input and to terminate the while..not loop
 	           except ValueError as e:
@@ -604,7 +554,6 @@ if __name__ == "__main__":
 	   if choice == 1:
             _led_on()
             _calibrate()
-            #_reading()
             _led_off()
 
 	   elif choice == 2:		   
@@ -617,10 +566,7 @@ if __name__ == "__main__":
             _led_off()
             capture.cancel()
             print("Bye !")
-            lcd.clear()
-            lcd.message("Bye !")
             time.sleep(1.5)
-            lcd.set_backlight(0)
             pi.stop()            
             quit()
 	   
