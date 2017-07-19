@@ -6,12 +6,14 @@
 # Licence : Public Domain
 # Versioning : https://github.com/CedricGoby/rpi-tcs3200
 # Original script : http://abyz.co.uk/rpi/pigpio/index.html
+# Script that allows to run pigpiod as a Linux service with root privileges : https://github.com/joan2937/pigpio/tree/master/util
 # Python Library for LCD : https://github.com/adafruit/Adafruit_Python_CharLCD
 #
-# Before starting the script :
-# sudo pigpiod
-# export PIGPIO_ADDR=hostame
-# export PIGPIO_PORT=port
+# Before starting the script pigpiod must be running and the Pi host/port must be specified.
+#
+# sudo pigpiod (or use a startup script)
+# export PIGPIO_ADDR=hostame (or use the pigpio.pi() function)
+# export PIGPIO_PORT=port (or use the pigpio.pi() function)
 
 from __future__ import print_function
 
@@ -21,6 +23,16 @@ import threading
 import csv
 from blessings import Terminal
 term = Terminal()
+
+# Buttons
+import RPi.GPIO as GPIO
+
+# Setup GPIO for buttons
+def _setup_buttons():
+  GPIO.setmode(GPIO.BCM)
+  GPIO.setup(1, GPIO.IN, pull_up_down=GPIO.PUD_UP) # If using the pull-up resistor, no external resistor is needed and the switch should be connected between GPIO pin and ground
+  GPIO.setup(7, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+  GPIO.setup(8, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
 # Import LCD module
 import Adafruit_CharLCD as LCD
@@ -41,6 +53,10 @@ lcd_rows    = 2
 # Initialize the LCD using the pins above.
 lcd = LCD.Adafruit_CharLCD(lcd_rs, lcd_en, lcd_d4, lcd_d5, lcd_d6, lcd_d7,
                         lcd_columns, lcd_rows, lcd_backlight)
+
+
+
+
 """
 This class reads RGB values from a TCS3200 colour sensor.
 
@@ -58,6 +74,7 @@ OUT   is a square wave whose frequency is proportional to the intensity of the s
 S0/S1 scales the frequency at 100%, 20%, 2% or off.
 S2/S3 selects between red, green, blue, and no filter. To take a reading the colour filters are selected in turn for a fraction of a second and the frequency is read and converted to Hz.
 """
+
 class sensor(threading.Thread):
    """
    The gpios connected to the sensor OUT, S2, and S3 pins must be specified.
@@ -440,7 +457,7 @@ class sensor(threading.Thread):
       # LCD display      
       lcd.clear()
       lcd.message("BLACK calibration\nPress to start")     
-      
+
       raw_input('Place a black object in front of the sensor\nthen press ENTER to start.\n')
       
       lcd.clear()
@@ -549,9 +566,9 @@ if __name__ == "__main__":
    import pigpio
    import tcs3200
    import os
-
-   # Create one instance of the pigpio.pi class. This class gives access to a specified Pi's GPIO. 
-   pi = pigpio.pi()
+   
+   # specify the Pi host/port.  For the remote host name, use '' if on local machine
+   pi = pigpio.pi('', 8888)
 
    capture = tcs3200.sensor(pi, 24, 22, 23, 4, 17, 18)
 
@@ -570,63 +587,42 @@ if __name__ == "__main__":
    _csv_output = capture._csv_output
    _file_output = "readings.csv" # Name of the output csv file
    
-   while True:
-	   print ('\n')
-	   print (term.bold('TCS3200 Color Sensor'), end='')
-	   print (term.normal, end='')
-	   print (term.red, end='')
-	   print (' ║▌║█', end='')
-	   print (term.green, end='')
-	   print (' ║▌│║▌', end='')
-	   print (term.blue, end='')
-	   print (' ║▌█', end='')
-	   print (term.normal)
-	   print ('', end='')
-	   for i in range(35):
-	    print('-', end='')
-	   print (term.bold('\nMAIN MENU\n'))
-	   print ('{t.bold}1{t.normal}. Calibrate and measure'.format(t=term))
-	   print ('{t.bold}2{t.normal}. Measure'.format(t=term))
-	   print ('{t.bold}3{t.normal}. Quit'.format(t=term))
-	
-	   # Wait for valid input in while...not
-	   is_valid=0
-	   while not is_valid :
-	           try :
-	                   print (term.bold('\nEnter your choice [1-3] : '), end='')
-	                   lcd.clear()
-	                   lcd.message("TCS3200 ready...\nPress to start")
-	                   choice = int ( raw_input() ) # Only accept integer
-	                   is_valid = 1 # set it to 1 to validate input and to terminate the while..not loop
-	           except ValueError as e:
-	                    print ("'%s' is not a number :-/" % e.args[0].split(": ")[1])
-	
-	   if choice == 1:
-            _led_on()
-            _calibrate()
-            #_reading()
-            _led_off()
+   _setup_buttons()
+   
+   _display_menu = True # State of the menu
 
-	   elif choice == 2:		   
-            _led_on()
-            _reading()
-            _csv_output(_file_output)
-            _led_off()
-	   
-	   elif choice == 3:
-            _led_off()
-            capture.cancel()
-            print("Bye !")
-            lcd.clear()
-            lcd.message("Bye !")
-            time.sleep(1.5)
-            lcd.set_backlight(0)
-            pi.stop()            
-            quit()
-	   
-	   else:
-	        print("Invalid choice, please try again...")
-	        os.execv(__file__, sys.argv)
+   while True:
+      if _display_menu:
+	     lcd.clear()
+	     lcd.message("TCS3200 ready...\nPress to start")
+	     _display_menu = False # Display menu only once in the loop
+      
+      if(GPIO.input(1) == GPIO.LOW):
+	     _led_on()
+	     _calibrate()
+	     _led_off()
+	     _display_menu = True
+      elif(GPIO.input(7) == GPIO.LOW):
+	     _led_on()
+	     _reading()
+	     _csv_output(_file_output)
+	     _led_off()
+	     _display_menu = True
+      elif(GPIO.input(8) == GPIO.LOW):
+	     _led_off()
+	     capture.cancel()
+	     print("Bye !")
+	     lcd.clear()
+	     lcd.message("Bye !")
+	     time.sleep(1.5)
+	     lcd.set_backlight(0)
+	     pi.stop()
+	     GPIO.cleanup()            
+	     quit()
+   
+	   #else:
+	        #print("Invalid choice, please try again...")
+	        #os.execv(__file__, sys.argv)
   
    print (term.normal)
 
