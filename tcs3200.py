@@ -16,12 +16,43 @@
 
 from __future__ import print_function
 
+from blessings import Terminal
+term = Terminal()
+
 import pigpio
 import time
 import threading
 import csv
-from blessings import Terminal
-term = Terminal()
+
+# Buttons
+import RPi.GPIO as GPIO
+
+# Setup GPIO for buttons
+def _setup_buttons():
+  GPIO.setmode(GPIO.BCM)
+  GPIO.setup(1, GPIO.IN, pull_up_down=GPIO.PUD_UP) # If using the pull-up resistor, no external resistor is needed and the switch should be connected between GPIO pin and ground
+  GPIO.setup(7, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+  GPIO.setup(8, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+
+# Import LCD module
+import Adafruit_CharLCD as LCD
+
+# LCD PIN = PI PIN (BCM)
+lcd_rs        = 5
+lcd_en        = 6
+lcd_d4        = 26
+lcd_d5        = 16
+lcd_d6        = 12
+lcd_d7        = 13
+lcd_backlight = 19
+
+# Define LCD column and row size for 16x2 LCD.
+lcd_columns = 16
+lcd_rows    = 2
+
+# Initialize the LCD using the pins above.
+lcd = LCD.Adafruit_CharLCD(lcd_rs, lcd_en, lcd_d4, lcd_d5, lcd_d6, lcd_d7,
+                        lcd_columns, lcd_rows, lcd_backlight)
 
 """
 This class reads RGB values from a TCS3200 colour sensor.
@@ -413,7 +444,7 @@ class sensor(threading.Thread):
          else:
             time.sleep(0.1)
 
-   # Calibration
+   # Calibration get black and white level (hz) (stdout)
    def _calibrate(self):
       
       # stdout
@@ -448,7 +479,59 @@ class sensor(threading.Thread):
       print ('\n{t.bold}{t.green}OK...{t.normal} Calibration OK\n'.format(t=term))    
       time.sleep(3)
 
-   # Reading
+   # Calibration get black and white level (hz) (LCD display)
+   def _calibrate_lcd(self):
+
+      # LCD display for black     
+      lcd.clear()
+      lcd.message("BLACK calibration\nPlace black object")     
+      time.sleep(5)     
+      lcd.clear()
+      lcd.blink(True)
+      lcd.message('BLACK:Progress ')
+
+      # Get black level           
+      for i in range(5):
+         time.sleep(self._interval)
+         hz = self.get_hertz()
+         print (hz)
+      self.set_black_level(hz)
+
+      # Get three separate values for black and display
+      self.rhz, self.ghz, self.bhz = self.get_hertz()
+      lcd.clear()
+      lcd.blink(False)
+      lcd.message("BLACK RGB (Hz)\n" + str(self.rhz) + " " + str(self.ghz) + " " + str(self.bhz))
+      time.sleep(5)
+
+      # LCD display for white
+      lcd.clear()
+      lcd.message("WHITE calibration\nPlace white object")
+      time.sleep(5)
+      lcd.clear()
+      lcd.blink(True)
+      lcd.message('WHITE:Progress ')      
+
+      # Get white level
+      for i in range(5):
+         time.sleep(self._interval)
+         hz = self.get_hertz()
+         print(hz)
+      self.set_white_level(hz)
+
+      # Get three separate values for white and display
+      self.rhz, self.ghz, self.bhz = self.get_hertz()     
+      lcd.clear()
+      lcd.blink(False)
+      lcd.message("WHITE RGB (Hz)\n" + str(self.rhz) + " " + str(self.ghz) + " " + str(self.bhz))
+      time.sleep(3)
+      
+      # Display end of calibration message
+      lcd.clear()
+      lcd.message("Calibration OK")
+      time.sleep(3)
+
+   # Reading (stdout)
    def _reading(self):
             
       for i in range(5): # 5 readings
@@ -464,9 +547,27 @@ class sensor(threading.Thread):
 
 	        print(self.r, self.g, self.b, self.rhz, self.ghz, self.bhz, self.rcy, self.gcy, self.bcy)
 	        time.sleep(self._interval)
-	        
 
-   # Write the last reading into a CSV file, add a timestamp
+   # Reading (LCD)
+   def _reading_lcd(self):
+ 
+      lcd.clear()
+      lcd.blink(True)
+      lcd.message('READING... ')
+            
+      for i in range(5): # 5 readings
+	        """
+	        The first triplet is the RGB values.
+	        The second triplet is the PWM frequency in hertz generated for the R, G, and B filters. The PWM frequency is proportional to the amount of each colour.
+	        The third triplet is the number of cycles of PWM the software needed to calculate the PWM frequency for R, G, and B.
+	        The second and third triplets are only useful during debugging so you needn't worry about them.
+	        """
+	        self.r, self.g, self.b = self.get_rgb()
+	        self.rhz, self.ghz, self.bhz = self.get_hertz()
+	        self.rcy, self.gcy, self.bcy = self.tally
+	        time.sleep(self._interval)	        
+
+   # Write the last reading into a CSV file, add a timestamp (stdout)
    def _csv_output(self, _file_output):
 
       try:	   
@@ -477,6 +578,23 @@ class sensor(threading.Thread):
 		  print ("File error !")
       else:
 		  print("Datas stored\n" + str(self.r) + " " + str(self.g) + " " + str(self.b))
+		  time.sleep(5)
+
+   # Write the last reading into a CSV file, add a timestamp (LCD)
+   def _csv_output_lcd(self, _file_output):
+      
+      try:	   
+          with open(_file_output, 'a') as csvfile:
+             capturewriter = csv.writer(csvfile, delimiter='\t')
+             capturewriter.writerow([time.time()] + [self.r] + [self.g] + [self.b] + [self.rhz] + [self.ghz] + [self.bhz] + [self.rcy] + [self.gcy] + [self.bcy])
+      except:
+		  lcd.clear()
+		  lcd.message("File error !")
+		  time.sleep(5)
+      else:
+		  lcd.clear()
+		  lcd.blink(False)
+		  lcd.message("Datas stored\n" + str(self.r) + " " + str(self.g) + " " + str(self.b))
 		  time.sleep(5)
 
    # LED On
@@ -490,87 +608,3 @@ class sensor(threading.Thread):
    def _led_off(self):
       
       self._pi.set_mode(25, pigpio.INPUT)
-
-# Run following code when the program starts
-if __name__ == "__main__":
-
-   import sys
-   import pigpio
-   import tcs3200
-   import os
-
-   # specify the Pi host/port.  For the remote host name, use '' if on local machine
-   pi = pigpio.pi('', 8888)
-
-   capture = tcs3200.sensor(pi, 24, 22, 23, 4, 17, 18)
-
-   capture.set_frequency(2) # 20%
-
-   interval = 1 # Reading interval in second
-   capture.set_update_interval(interval)
-
-   _led_on = capture._led_on
-   _led_off = capture._led_off
-   
-   _calibrate = capture._calibrate
-   
-   _reading = capture._reading
-   
-   _csv_output = capture._csv_output
-   _file_output = "readings.csv" # Name of the output csv file
-   
-   while True:
-	   print ('\n')
-	   print (term.bold('TCS3200 Color Sensor'), end='')
-	   print (term.normal, end='')
-	   print (term.red, end='')
-	   print (' ║▌║█', end='')
-	   print (term.green, end='')
-	   print (' ║▌│║▌', end='')
-	   print (term.blue, end='')
-	   print (' ║▌█', end='')
-	   print (term.normal)
-	   print ('', end='')
-	   for i in range(35):
-	    print('-', end='')
-	   print (term.bold('\nMAIN MENU\n'))
-	   print ('{t.bold}1{t.normal}. Calibrate'.format(t=term))
-	   print ('{t.bold}2{t.normal}. Measure'.format(t=term))
-	   print ('{t.bold}3{t.normal}. Quit'.format(t=term))
-	
-	   # Wait for valid input in while...not
-	   is_valid=0
-	   while not is_valid :
-	           try :
-	                   print (term.bold('\nEnter your choice [1-3] : '), end='')
-	                   choice = int ( raw_input() ) # Only accept integer
-	                   is_valid = 1 # set it to 1 to validate input and to terminate the while..not loop
-	           except ValueError as e:
-	                    print ("'%s' is not a number :-/" % e.args[0].split(": ")[1])
-	
-	   if choice == 1:
-            _led_on()
-            _calibrate()
-            _led_off()
-
-	   elif choice == 2:		   
-            _led_on()
-            _reading()
-            _csv_output(_file_output)
-            _led_off()
-	   
-	   elif choice == 3:
-            _led_off()
-            capture.cancel()
-            print("Bye !")
-            time.sleep(1.5)
-            pi.stop()            
-            quit()
-	   
-	   else:
-	        print("Invalid choice, please try again...")
-	        os.execv(__file__, sys.argv)
-  
-   print (term.normal)
-
-			
