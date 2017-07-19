@@ -535,7 +535,7 @@ if __name__ == "__main__":
 	   for i in range(35):
 	    print('-', end='')
 	   print (term.bold('\nMAIN MENU\n'))
-	   print ('{t.bold}1{t.normal}. Calibrate and measure'.format(t=term))
+	   print ('{t.bold}1{t.normal}. Calibrate'.format(t=term))
 	   print ('{t.bold}2{t.normal}. Measure'.format(t=term))
 	   print ('{t.bold}3{t.normal}. Quit'.format(t=term))
 	
