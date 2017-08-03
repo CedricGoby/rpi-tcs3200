@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # Description : Reads RGB values from a TCS3200 colour sensor and write the result into a CSV file.
-# Use with switch buttons and LCD display.
+# Use with switch buttons and standard HD44780 LCD display.
 # Usage : ./button_lcd.py
 # Licence : Public Domain
 # Versioning : https://github.com/CedricGoby/rpi-tcs3200
