@@ -5,7 +5,6 @@
 # Usage : ./stdout.py
 # Licence : Public Domain
 # Versioning : https://github.com/CedricGoby/rpi-tcs3200
-# Original script : http://abyz.co.uk/rpi/pigpio/index.html
 # Script that allows to run pigpiod as a Linux service with root privileges : https://github.com/joan2937/pigpio/tree/master/util
 #
 # Before starting the script pigpiod must be running and the Pi host/port must be specified.

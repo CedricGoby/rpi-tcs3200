@@ -6,7 +6,6 @@
 # Usage : ./button_lcd.py
 # Licence : Public Domain
 # Versioning : https://github.com/CedricGoby/rpi-tcs3200
-# Original script : http://abyz.co.uk/rpi/pigpio/index.html
 # Script that allows to run pigpiod as a Linux service with root privileges : https://github.com/joan2937/pigpio/tree/master/util
 # Python Library for LCD : https://github.com/adafruit/Adafruit_Python_CharLCD
 #
