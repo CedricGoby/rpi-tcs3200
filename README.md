@@ -7,8 +7,6 @@ Le fichier stdout.py permet de faire l'acquisition depuis le shell, d'afficher l
 
 Le fichier button_lcd.py permet de faire l'acquisition à l'aide de boutons poussoirs, la sortie se fait sur un écran LCD standard HD44780.
 
-
-
 ## Matériel utilisé
 Capteur de couleur TCS3200
 Ecran LCD standard HD44780
