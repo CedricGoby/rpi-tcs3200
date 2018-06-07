@@ -4,7 +4,7 @@
 # Description : Reads RGB values from a TCS3200 colour sensor and write the result into a CSV file.
 # Usage : ./tcs3200.py
 # Licence : Public Domain
-# Versioning : https://github.com/CedricGoby/rpi-tcs3200
+# Versioning : https://gitlab.com/CedricGoby/rpi-tcs3200
 # Original script : http://abyz.co.uk/rpi/pigpio/index.html
 # Script that allows to run pigpiod as a Linux service with root privileges : https://github.com/joan2937/pigpio/tree/master/util
 #
